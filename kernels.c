@@ -278,38 +278,46 @@ static pixel avg(int dim, int i, int j, pixel *src)
         dst[RIDX(i, jp, dim)] = avg(dim, i, jp, src);
       }
   }
-  char inline_smooth_descr[] = "inline smooth: inlines average function, also unrolls loop";
-  void inline_smooth(int dim, pixel *src, pixel *dst)
-  {
-    int i, j, jp;
-    for (i = 0; i < dim; i++)
-      for (j = 0; j < dim; j+=2)
-      {
-        jp = j+1;
-
-        //average funtion
-        int ii, jj;
-        pixel_sum sum;
-        pixel current_pixel;
-
-        initialize_pixel_sum(&sum);
-        for(ii = max(i-1, 0); ii <= min(i+1, dim-1); ii++)
-       for(jj = max(j-1, 0); jj <= min(j+1, dim-1); jj++)
-         accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
-
-        assign_sum_to_pixel(&current_pixel, sum);
-        dst[RIDX(i, j, dim)] = current_pixel;
-
-       //average function 2
-        initialize_pixel_sum(&sum);
-        for(ii = max(i-1, 0); ii <= min(i+1, dim-1); ii++)
-       for(jj = max(jp-1, 0); jj <= min(jp+1, dim-1); jj++)
-         accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
-
-        assign_sum_to_pixel(&current_pixel, sum);
-        dst[RIDX(i, jp, dim)] = current_pixel;
-      }
-  }
+//   char inline_smooth_descr[] = "inline smooth: inlines average function, also unrolls loop";
+//   void inline_smooth(int dim, pixel *src, pixel *dst)
+//   {
+//     int i, j, jp;
+//     for (i = 0; i < dim; i++)
+//       for (j = 0; j < dim; j+=2)
+//       {
+//         jp = j+1;
+//
+//         //average funtion
+//         int ii, jj;
+//         pixel_sum sum;
+//         pixel current_pixel;
+//
+//         (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+// (&sum)->num = 0;
+//         for(ii = max(i-1, 0); ii <= min(i+1, dim-1); ii++)
+//        for(jj = max(j-1, 0); jj <= min(j+1, dim-1); jj++)
+//          {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+// (&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+// (&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+// (&sum)->num++;}
+//
+//         assign_sum_to_pixel(&current_pixel, sum);
+//         dst[RIDX(i, j, dim)] = current_pixel;
+//
+//        //average function 2
+//         (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+// (&sum)->num = 0;
+//         for(ii = max(i-1, 0); ii <= min(i+1, dim-1); ii++)
+//        for(jj = max(jp-1, 0); jj <= min(jp+1, dim-1); jj++)
+//          {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+// (&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+// (&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+// (&sum)->num++;}
+//
+//         assign_sum_to_pixel(&current_pixel, sum);
+//         dst[RIDX(i, jp, dim)] = current_pixel;
+//       }
+//   }
 
 
   char middle_smooth_descr[] = "middle smooth: does the middle seperate, also inlines average function, also unrolls loop";
@@ -325,19 +333,27 @@ static pixel avg(int dim, int i, int j, pixel *src)
 
         //average funtion
 
-        initialize_pixel_sum(&sum);
-        for(ii = i-1; ii <= i+1; ii++)
+        (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+(&sum)->num = 0;
+        for(ii = i-1; ii <= i+1; ii++){
        for(jj = j-1; jj <= j+1; jj++)
-         accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+         {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+(&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+(&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+(&sum)->num++;}}
 
         assign_sum_to_pixel(&current_pixel, sum);
         dst[RIDX(i, j, dim)] = current_pixel;
 
        //average function 2
-        initialize_pixel_sum(&sum);
-        for(ii = i-1; ii <= i+1; ii++)
+        (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+(&sum)->num = 0;
+        for(ii = i-1; ii <= i+1; ii++){
        for(jj = jp-1; jj <= jp+1; jj++)
-         accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+         {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+(&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+(&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+(&sum)->num++;}}
 
         assign_sum_to_pixel(&current_pixel, sum);
         dst[RIDX(i, jp, dim)] = current_pixel;
@@ -345,18 +361,26 @@ static pixel avg(int dim, int i, int j, pixel *src)
    for (i = 1; i < dim-1; i++)
    {
      //average function for top
-     initialize_pixel_sum(&sum);
-     for(ii = i-1; ii <= i+1; ii++)
+     (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+(&sum)->num = 0;
+     for(ii = i-1; ii <= i+1; ii++){
     for(jj = 0; jj <= 1; jj++)
-      accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+      {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+(&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+(&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+(&sum)->num++;}}
 
      assign_sum_to_pixel(&current_pixel, sum);
      dst[RIDX(i, 0, dim)] = current_pixel;
      // for bottom
-     initialize_pixel_sum(&sum);
-     for(ii = i-1; ii <= i+1; ii++)
+     (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+(&sum)->num = 0;
+     for(ii = i-1; ii <= i+1; ii++){
     for(jj = dim-2; jj <= dim-1; jj++)
-      accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+      {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+(&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+(&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+(&sum)->num++;}}
 
      assign_sum_to_pixel(&current_pixel, sum);
      dst[RIDX(i, dim-1, dim)] = current_pixel;
@@ -365,46 +389,70 @@ static pixel avg(int dim, int i, int j, pixel *src)
    for (j = 1; j < dim-1; j++)
    {
      //for sides
-     initialize_pixel_sum(&sum);
-     for(ii = 0; ii <= 1; ii++)
+     (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+(&sum)->num = 0;
+     for(ii = 0; ii <= 1; ii++){
     for(jj = j-1; jj <= j+1; jj++)
-      accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+      {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+(&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+(&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+(&sum)->num++;}}
      assign_sum_to_pixel(&current_pixel, sum);
      dst[RIDX(0, j, dim)] = current_pixel;
 
-     initialize_pixel_sum(&sum);
-     for(ii = dim-2; ii <= dim-1; ii++)
+     (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+(&sum)->num = 0;
+     for(ii = dim-2; ii <= dim-1; ii++){
     for(jj = j-1; jj <= j+1; jj++)
-      accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+      {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+(&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+(&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+(&sum)->num++;}}
      assign_sum_to_pixel(&current_pixel, sum);
      dst[RIDX(dim-1, j, dim)] = current_pixel;
    }
    //for corners
-   initialize_pixel_sum(&sum);
-   for(ii = 0; ii <= 1; ii++)
+   (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+(&sum)->num = 0;
+   for(ii = 0; ii <= 1; ii++){
   for(jj = 0; jj <= 1; jj++)
-    accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+    {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+(&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+(&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+(&sum)->num++;}}
    assign_sum_to_pixel(&current_pixel, sum);
    dst[RIDX(0, 0, dim)] = current_pixel;
 
-   initialize_pixel_sum(&sum);
-   for(ii = 0; ii <= 1; ii++)
+   (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+(&sum)->num = 0;
+   for(ii = 0; ii <= 1; ii++){
   for(jj = dim-2; jj <= dim-1; jj++)
-    accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+    {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+(&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+(&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+(&sum)->num++;}}
    assign_sum_to_pixel(&current_pixel, sum);
    dst[RIDX(0, dim-1, dim)] = current_pixel;
 
-   initialize_pixel_sum(&sum);
-   for(ii = dim-2; ii <= dim-1; ii++)
+   (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+(&sum)->num = 0;
+   for(ii = dim-2; ii <= dim-1; ii++){
   for(jj = 0; jj <= 1; jj++)
-    accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+    {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+(&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+(&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+(&sum)->num++;}}
    assign_sum_to_pixel(&current_pixel, sum);
    dst[RIDX(dim-1, 0, dim)] = current_pixel;
 
-   initialize_pixel_sum(&sum);
-   for(ii = dim-2; ii <= dim-1; ii++)
+   (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+(&sum)->num = 0;
+   for(ii = dim-2; ii <= dim-1; ii++){
   for(jj = dim-2; jj <= dim-1; jj++)
-    accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+    {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+(&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+(&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+(&sum)->num++;}}
    assign_sum_to_pixel(&current_pixel, sum);
    dst[RIDX(dim-1, dim-1, dim)] = current_pixel;
   }
@@ -477,7 +525,7 @@ static pixel avg(int dim, int i, int j, pixel *src)
      add_smooth_function(&smooth, smooth_descr);
      /* ... Register additional test functions here */
      add_smooth_function(&unravel_smooth, unravel_smooth_descr);
-     add_smooth_function(inline_smooth, inline_smooth_descr);
+    //  add_smooth_function(inline_smooth, inline_smooth_descr);
      add_smooth_function(middle_smooth, middle_smooth_descr);
      //add_smooth_function(&unravel2_smooth, unravel2_smooth_descr);
  }
