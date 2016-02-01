@@ -61,7 +61,7 @@ void rotate(int dim, pixel *src, pixel *dst)
 
       for (i = xs; i < (xe); i++)    //do the swapping
         for (j = vs; j < ve; j++)
-          dst[RIDX(dim-1-i, j, dim)] = src[RIDX(j, i, dim)];
+          dst[((dim-1-i)*(dim)+(j))] = src[((j)*(dim)+(i))];
     }
   }
 }
@@ -83,7 +83,7 @@ void break_rotate(int dim, pixel *src, pixel *dst)
 
       for (i = xs; i < (xe); i++)    //do the swapping
         for (j = vs; j < ve; j++)
-          dst[RIDX(dim-1-i, j, dim)] = src[RIDX(j, i, dim)];
+          dst[((dim-1-i)*(dim)+(j))] = src[((j)*(dim)+(i))];
     }
   }
 }
@@ -104,7 +104,7 @@ void break2_rotate(int dim, pixel *src, pixel *dst)
 
       for (i = xs; i < (xe); i++)    //do the swapping
         for (j = vs; j < ve; j++)
-          dst[RIDX(dim-1-i, j, dim)] = src[RIDX(j, i, dim)];
+          dst[((dim-1-i)*(dim)+(j))] = src[((j)*(dim)+(i))];
     }
   }
 }
@@ -113,19 +113,18 @@ void autobreak_rotate(int dim, pixel *src, pixel *dst)
 {                                   //split the operation into 16
   int i, j, k, l;
   int s = dim/32;              //how many splits? - experiment with 64 vs 32
-  int f = dim/s;
   for (k = 0; k<s; k++)
   {
-    int xs = k * f;      //where to start and end
-    int xe = (k+1) * f;
+    int xs = k * 32;      //where to start and end
+    int xe = xs + 32;
     for (l = 0; l<s; l++)
     {
-      int vs = l * f;
-      int ve = (l+1)*f;
+      int vs = l * 32;
+      int ve = vs + 32;
 
       for (i = xs; i < (xe); i++)    //do the swapping
         for (j = vs; j < ve; j++)
-          dst[RIDX(dim-1-i, j, dim)] = src[RIDX(j, i, dim)];
+          dst[((dim-1-i)*(dim)+(j))] = src[((j)*(dim)+(i))];
     }
   }
 }
@@ -146,7 +145,7 @@ void autobreak2_rotate(int dim, pixel *src, pixel *dst)
 
       for (i = xs; i < (xe); i++)    //do the swapping
         for (j = vs; j < ve; j++)
-          dst[RIDX(dim-1-i, j, dim)] = src[RIDX(j, i, dim)];
+          dst[((dim-1-i)*(dim)+(j))] = src[((j)*(dim)+(i))];
     }
   }
 }
