@@ -1,5 +1,5 @@
 Loop unrolling
 Common subexpression elimination
 Loop interchange
-Loop locking
+Loop blocking
 Function inlining
