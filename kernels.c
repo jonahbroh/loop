@@ -10,13 +10,13 @@
  * Please fill in the following team struct
  */
 team_t team = {
-    "Team 11",              /* Team name */
+    "team 11",              /* Team name */
 
-    "Jonah Broh",     /* First member full name */
-    "jonah.broh@coloradocollege.edu",  /* First member email address */
+    "Aidan Q. Hendrickson",     /* First member full name */
+    "",  /* First member email address */
 
-    "Aidan Hendrickson",                   /* Second member full name (leave blank if none) */
-    "aidan.hendrickson@coloradocollege.edu"                    /* Second member email addr (leave blank if none) */
+    "Jonah P. Broh",                   /* Second member full name (leave blank if none) */
+    ""                    /* Second member email addr (leave blank if none) */
 };
 
 /***************
@@ -46,18 +46,110 @@ void naive_rotate(int dim, pixel *src, pixel *dst)
  */
 char rotate_descr[] = "rotate: Current working version";
 void rotate(int dim, pixel *src, pixel *dst)
-{
-  int i, j;
+{                                   //split the operation into 8
+  int i, j, k, l;
+  int s = 8;              //how many splits?
+  int f = dim/s;
+  for (k = 0; k<s; k++)
+  {
+    int xs = k * f;      //where to start and end
+    int xe = (k+1) * f;
+    for (l = 0; l<s; l++)
+    {
+      int vs = l * f;
+      int ve = (l+1)*f;
 
-  for (i = 0; i < dim; i++){
-    int sub = dim-1-i;
-    for (j = 0; j < dim; j++){
-      //i and j switched, RIDX's first parameter only has to be defined once per loop
-      dst[RIDX(sub, j, dim)] = src[RIDX(j, i, dim)];
+      for (i = xs; i < (xe); i++)    //do the swapping
+        for (j = vs; j < ve; j++)
+          dst[RIDX(dim-1-i, j, dim)] = src[RIDX(j, i, dim)];
     }
   }
 }
 
+char break_rotate_descr[] = "break rotate: breaks the picture 16 times each way";
+void break_rotate(int dim, pixel *src, pixel *dst)
+{                                   //split the operation into 16
+  int i, j, k, l;
+  int s = 16;              //how many splits?
+  int f = dim/s;
+  for (k = 0; k<s; k++)
+  {
+    int xs = k * f;      //where to start and end
+    int xe = (k+1) * f;
+    for (l = 0; l<s; l++)
+    {
+      int vs = l * f;
+      int ve = (l+1)*f;
+
+      for (i = xs; i < (xe); i++)    //do the swapping
+        for (j = vs; j < ve; j++)
+          dst[RIDX(dim-1-i, j, dim)] = src[RIDX(j, i, dim)];
+    }
+  }
+}
+char break2_rotate_descr[] = "break rotate: breaks the picture 4 times each way";
+void break2_rotate(int dim, pixel *src, pixel *dst)
+{                                   //split the operation into 4
+  int i, j, k, l;
+  int s = 4;              //how many splits?
+  int f = dim/s;
+  for (k = 0; k<s; k++)
+  {
+    int xs = k * f;      //where to start and end
+    int xe = (k+1) * f;
+    for (l = 0; l<s; l++)
+    {
+      int vs = l * f;
+      int ve = (l+1)*f;
+
+      for (i = xs; i < (xe); i++)    //do the swapping
+        for (j = vs; j < ve; j++)
+          dst[RIDX(dim-1-i, j, dim)] = src[RIDX(j, i, dim)];
+    }
+  }
+}
+char autobreak_rotate_descr[] = "autobreak rotate: breaks the picture into chunks of 32";
+void autobreak_rotate(int dim, pixel *src, pixel *dst)
+{                                   //split the operation into 16
+  int i, j, k, l;
+  int s = dim/32;              //how many splits? - experiment with 64 vs 32
+  int f = dim/s;
+  for (k = 0; k<s; k++)
+  {
+    int xs = k * f;      //where to start and end
+    int xe = (k+1) * f;
+    for (l = 0; l<s; l++)
+    {
+      int vs = l * f;
+      int ve = (l+1)*f;
+
+      for (i = xs; i < (xe); i++)    //do the swapping
+        for (j = vs; j < ve; j++)
+          dst[RIDX(dim-1-i, j, dim)] = src[RIDX(j, i, dim)];
+    }
+  }
+}
+char autobreak2_rotate_descr[] = "autobreak rotate: breaks the picture into 64s";
+void autobreak2_rotate(int dim, pixel *src, pixel *dst)
+{                                   //split the operation into 16
+  int i, j, k, l;
+  int s = dim/64;              //how many splits? - experiment with 64 vs 32
+  int f = dim/s;
+  for (k = 0; k<s; k++)
+  {
+    int xs = k * f;      //where to start and end
+    int xe = (k+1) * f;
+    for (l = 0; l<s; l++)
+    {
+      int vs = l * f;
+      int ve = (l+1)*f;
+
+      for (i = xs; i < (xe); i++)    //do the swapping
+        for (j = vs; j < ve; j++)
+          dst[RIDX(dim-1-i, j, dim)] = src[RIDX(j, i, dim)];
+    }
+  }
+}
 /*********************************************************************
  * register_rotate_functions - Register all of your different versions
  *     of the rotate kernel with the driver by calling the
@@ -71,6 +163,11 @@ void register_rotate_functions()
     add_rotate_function(&naive_rotate, naive_rotate_descr);
     add_rotate_function(&rotate, rotate_descr);
     /* ... Register additional test functions here */
+    add_rotate_function(&break_rotate, break_rotate_descr);
+    add_rotate_function(&break2_rotate, break2_rotate_descr);
+    add_rotate_function(&autobreak_rotate, autobreak_rotate_descr);
+    add_rotate_function(&autobreak2_rotate, autobreak2_rotate_descr);
+
 }
 
 
@@ -168,26 +265,73 @@ void naive_smooth(int dim, pixel *src, pixel *dst)
  * smooth - Your current working version of smooth.
  * IMPORTANT: This is the version you will be graded on
  */
-char smooth_descr[] = "smooth: Current working version";
-void smooth(int dim, pixel *src, pixel *dst)
+
+ char smooth_descr[] = "smooth: Current working version";
+ void smooth(int dim, pixel *src, pixel *dst)
+ {
+   int i, j, jp;
+
+   for (i = 0; i < dim; i++)
+     for (j = 0; j < dim; j+=2)
+     {
+       jp = j+1;
+       dst[RIDX(i, j, dim)] = avg(dim, i, j, src);
+       dst[RIDX(i, jp, dim)] = avg(dim, i, jp, src);
+     }
+ }
+
+ char exp_smooth_descr[] = "exp_smooth: does something diferent idk";
+ void exp_smooth(int dim, pixel *src, pixel *dst)
+ {
+     int i, j, ii;
+
+     for (i = 0; i < 2; i++)
+     {
+       for (ii = 0 ; ii < dim; ii++)
+       {
+   	     for (j = 0; j < dim; j++)
+          {
+   	        dst[RIDX(i, j, dim)] = avg(dim, i, j, src);
+          }
+        }
+      }
+ }
+ //one loop for interior of image, no bounds checking
+char unravel_smooth_descr[] = "smooth unravel: unravels by amount u(2)";
+void unravel_smooth(int dim, pixel *src, pixel *dst)
 {
-  int i, j, ii, jj;
+  int i, j, k, jp;
+  int u = 2;
 
-  for (i = 0; i < dim; i++){
-    for (j = 0; j < dim; j++){
-      pixel_sum sum;
-      pixel current_pixel;
-
-      initialize_pixel_sum(&sum);
-      for(ii = max(i-1, 0); ii <= min(i+1, dim-1); ii++)
-  	   for(jj = max(j-1, 0); jj <= min(j+1, dim-1); jj++)
-  	    accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
-
-      assign_sum_to_pixel(&current_pixel, sum);
-      dst[RIDX(i, j, dim)] = current_pixel;
+  for (i = 0; i < dim; i++)
+    for (j = 0; j < dim; j+=2)
+    {
+      for (k = 0; k < u; k++)
+      {
+        jp = j+k;
+        dst[RIDX(i, jp, dim)] = avg(dim, i, jp, src);
+      }
     }
-  }
 }
+
+char unravel2_smooth_descr[] = "smooth unravel2: unravels by amount u(4)";
+void unravel2_smooth(int dim, pixel *src, pixel *dst)
+{
+  int i, j, k, jp;
+  int u = 4;
+
+  for (i = 0; i < dim; i++)
+    for (j = 0; j < dim; j+=2)
+    {
+      for (k = 0; k < u; k++)
+      {
+        jp = j+k;
+        dst[RIDX(i, jp, dim)] = avg(dim, i, jp, src);
+      }
+    }
+}
+
+
 
 
 /*********************************************************************
@@ -202,4 +346,6 @@ void register_smooth_functions() {
     add_smooth_function(&smooth, smooth_descr);
     add_smooth_function(&naive_smooth, naive_smooth_descr);
     /* ... Register additional test functions here */
+    add_smooth_function(&unravel_smooth, unravel_smooth_descr);
+    //add_smooth_function(&unravel2_smooth, unravel2_smooth_descr);
 }
