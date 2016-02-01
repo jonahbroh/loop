@@ -46,21 +46,20 @@ void naive_rotate(int dim, pixel *src, pixel *dst)
  */
 char rotate_descr[] = "rotate: Current working version";
 void rotate(int dim, pixel *src, pixel *dst)
-{                                   //split the operation into 8
+{
   int i, j, k, l;
-  int s = 8;              //how many splits?
-  int f = dim/s;
-  for (k = 0; k<s; k++)
+  int s = dim/32;              //will split it into 32s
+  for (k = 0; k<s; k++)         //for each fragment
   {
-    int xs = k * f;      //where to start and end
-    int xe = (k+1) * f;
+    int xs = k * 32;      //horizontal start
+    int xe = xs + 32;     // horizontal end
     for (l = 0; l<s; l++)
     {
-      int vs = l * f;
-      int ve = (l+1)*f;
+      int ys = l * 32;      //vertical start
+      int ye = ys + 32;     //vertical end
 
-      for (i = xs; i < (xe); i++)    //do the swapping
-        for (j = vs; j < ve; j++)
+      for (i = xs; i < (xe); i++)    //do the replacing within the fragment
+        for (j = ys; j < (ys); j++)
           dst[((dim-1-i)*(dim)+(j))] = src[((j)*(dim)+(i))];
     }
   }
@@ -120,7 +119,7 @@ void autobreak_rotate(int dim, pixel *src, pixel *dst)
     for (l = 0; l<s; l++)
     {
       int ys = l * 32;      //vertical start
-      int ye = vs + 32;     //vertical end
+      int ye = ys + 32;     //vertical end
 
       for (i = xs; i < (xe); i++)    //do the replacing within the fragment
         for (j = ys; j < ye; j++)
@@ -268,15 +267,158 @@ static pixel avg(int dim, int i, int j, pixel *src)
   char smooth_descr[] = "smooth: Current working version";
   void smooth(int dim, pixel *src, pixel *dst)
   {
-    int i, j, jp;
-
-    for (i = 0; i < dim; i++)
-      for (j = 0; j < dim; j+=2)
+    int i, j, jp, ii, jj;
+    pixel_sum sum;
+    pixel current_pixel;
+    for (i = 1; i < dim-1; i++)
+      for (j = 1; j < dim-1; j+=2)
       {
         jp = j+1;
-        dst[RIDX(i, j, dim)] = avg(dim, i, j, src);
-        dst[RIDX(i, jp, dim)] = avg(dim, i, jp, src);
+
+        //average funtion
+
+        (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+(&sum)->num = 0;
+        for(ii = i-1; ii <= i+1; ii++){
+       for(jj = j-1; jj <= j+1; jj++)
+         {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+(&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+(&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+(&sum)->num++;}}
+
+        (&current_pixel)->red = (unsigned short) (sum.red/sum.num);
+(&current_pixel)->green = (unsigned short) (sum.green/sum.num);
+(&current_pixel)->blue = (unsigned short) (sum.blue/sum.num);
+        dst[RIDX(i, j, dim)] = current_pixel;
+
+       //average function 2
+        (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+(&sum)->num = 0;
+        for(ii = i-1; ii <= i+1; ii++){
+       for(jj = jp-1; jj <= jp+1; jj++)
+         {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+(&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+(&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+(&sum)->num++;}}
+
+        (&current_pixel)->red = (unsigned short) (sum.red/sum.num);
+(&current_pixel)->green = (unsigned short) (sum.green/sum.num);
+(&current_pixel)->blue = (unsigned short) (sum.blue/sum.num);
+        dst[RIDX(i, jp, dim)] = current_pixel;
       }
+   for (i = 1; i < dim-1; i++)
+   {
+     //average function for top
+     (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+(&sum)->num = 0;
+     for(ii = i-1; ii <= i+1; ii++){
+    for(jj = 0; jj <= 1; jj++)
+      {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+(&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+(&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+(&sum)->num++;}}
+
+     (&current_pixel)->red = (unsigned short) (sum.red/sum.num);
+(&current_pixel)->green = (unsigned short) (sum.green/sum.num);
+(&current_pixel)->blue = (unsigned short) (sum.blue/sum.num);
+     dst[RIDX(i, 0, dim)] = current_pixel;
+     // for bottom
+     (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+(&sum)->num = 0;
+     for(ii = i-1; ii <= i+1; ii++){
+    for(jj = dim-2; jj <= dim-1; jj++)
+      {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+(&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+(&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+(&sum)->num++;}}
+
+     (&current_pixel)->red = (unsigned short) (sum.red/sum.num);
+(&current_pixel)->green = (unsigned short) (sum.green/sum.num);
+(&current_pixel)->blue = (unsigned short) (sum.blue/sum.num);
+     dst[RIDX(i, dim-1, dim)] = current_pixel;
+
+   }
+   for (j = 1; j < dim-1; j++)
+   {
+     //for sides
+     (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+(&sum)->num = 0;
+     for(ii = 0; ii <= 1; ii++){
+    for(jj = j-1; jj <= j+1; jj++)
+      {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+(&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+(&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+(&sum)->num++;}}
+     (&current_pixel)->red = (unsigned short) (sum.red/sum.num);
+(&current_pixel)->green = (unsigned short) (sum.green/sum.num);
+(&current_pixel)->blue = (unsigned short) (sum.blue/sum.num);
+     dst[RIDX(0, j, dim)] = current_pixel;
+
+     (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+(&sum)->num = 0;
+     for(ii = dim-2; ii <= dim-1; ii++){
+    for(jj = j-1; jj <= j+1; jj++)
+      {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+(&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+(&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+(&sum)->num++;}}
+     (&current_pixel)->red = (unsigned short) (sum.red/sum.num);
+(&current_pixel)->green = (unsigned short) (sum.green/sum.num);
+(&current_pixel)->blue = (unsigned short) (sum.blue/sum.num);
+     dst[RIDX(dim-1, j, dim)] = current_pixel;
+   }
+   //for corners
+   (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+(&sum)->num = 0;
+   for(ii = 0; ii <= 1; ii++){
+  for(jj = 0; jj <= 1; jj++)
+    {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+(&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+(&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+(&sum)->num++;}}
+   (&current_pixel)->red = (unsigned short) (sum.red/sum.num);
+(&current_pixel)->green = (unsigned short) (sum.green/sum.num);
+(&current_pixel)->blue = (unsigned short) (sum.blue/sum.num);
+   dst[RIDX(0, 0, dim)] = current_pixel;
+
+   (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+(&sum)->num = 0;
+   for(ii = 0; ii <= 1; ii++){
+  for(jj = dim-2; jj <= dim-1; jj++)
+    {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+(&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+(&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+(&sum)->num++;}}
+   (&current_pixel)->red = (unsigned short) (sum.red/sum.num);
+(&current_pixel)->green = (unsigned short) (sum.green/sum.num);
+(&current_pixel)->blue = (unsigned short) (sum.blue/sum.num);
+   dst[RIDX(0, dim-1, dim)] = current_pixel;
+
+   (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+(&sum)->num = 0;
+   for(ii = dim-2; ii <= dim-1; ii++){
+  for(jj = 0; jj <= 1; jj++)
+    {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+(&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+(&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+(&sum)->num++;}}
+   (&current_pixel)->red = (unsigned short) (sum.red/sum.num);
+(&current_pixel)->green = (unsigned short) (sum.green/sum.num);
+(&current_pixel)->blue = (unsigned short) (sum.blue/sum.num);
+   dst[RIDX(dim-1, 0, dim)] = current_pixel;
+
+   (&sum)->red = (&sum)->green = (&sum)->blue = 0;
+(&sum)->num = 0;
+   for(ii = dim-2; ii <= dim-1; ii++){
+  for(jj = dim-2; jj <= dim-1; jj++)
+    {(&sum)->red += (int) src[RIDX(ii, jj, dim)].red;
+(&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
+(&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
+(&sum)->num++;}}
+   (&current_pixel)->red = (unsigned short) (sum.red/sum.num);
+(&current_pixel)->green = (unsigned short) (sum.green/sum.num);
+(&current_pixel)->blue = (unsigned short) (sum.blue/sum.num);
+   dst[RIDX(dim-1, dim-1, dim)] = current_pixel;
   }
 //   char inline_smooth_descr[] = "inline smooth: inlines average function, also unrolls loop";
 //   void inline_smooth(int dim, pixel *src, pixel *dst)
@@ -342,7 +484,9 @@ static pixel avg(int dim, int i, int j, pixel *src)
 (&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
 (&sum)->num++;}}
 
-        assign_sum_to_pixel(&current_pixel, sum);
+        (&current_pixel)->red = (unsigned short) (sum.red/sum.num);
+(&current_pixel)->green = (unsigned short) (sum.green/sum.num);
+(&current_pixel)->blue = (unsigned short) (sum.blue/sum.num);
         dst[RIDX(i, j, dim)] = current_pixel;
 
        //average function 2
@@ -355,7 +499,9 @@ static pixel avg(int dim, int i, int j, pixel *src)
 (&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
 (&sum)->num++;}}
 
-        assign_sum_to_pixel(&current_pixel, sum);
+        (&current_pixel)->red = (unsigned short) (sum.red/sum.num);
+(&current_pixel)->green = (unsigned short) (sum.green/sum.num);
+(&current_pixel)->blue = (unsigned short) (sum.blue/sum.num);
         dst[RIDX(i, jp, dim)] = current_pixel;
       }
    for (i = 1; i < dim-1; i++)
@@ -370,7 +516,9 @@ static pixel avg(int dim, int i, int j, pixel *src)
 (&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
 (&sum)->num++;}}
 
-     assign_sum_to_pixel(&current_pixel, sum);
+     (&current_pixel)->red = (unsigned short) (sum.red/sum.num);
+(&current_pixel)->green = (unsigned short) (sum.green/sum.num);
+(&current_pixel)->blue = (unsigned short) (sum.blue/sum.num);
      dst[RIDX(i, 0, dim)] = current_pixel;
      // for bottom
      (&sum)->red = (&sum)->green = (&sum)->blue = 0;
@@ -382,7 +530,9 @@ static pixel avg(int dim, int i, int j, pixel *src)
 (&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
 (&sum)->num++;}}
 
-     assign_sum_to_pixel(&current_pixel, sum);
+     (&current_pixel)->red = (unsigned short) (sum.red/sum.num);
+(&current_pixel)->green = (unsigned short) (sum.green/sum.num);
+(&current_pixel)->blue = (unsigned short) (sum.blue/sum.num);
      dst[RIDX(i, dim-1, dim)] = current_pixel;
 
    }
@@ -397,7 +547,9 @@ static pixel avg(int dim, int i, int j, pixel *src)
 (&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
 (&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
 (&sum)->num++;}}
-     assign_sum_to_pixel(&current_pixel, sum);
+     (&current_pixel)->red = (unsigned short) (sum.red/sum.num);
+(&current_pixel)->green = (unsigned short) (sum.green/sum.num);
+(&current_pixel)->blue = (unsigned short) (sum.blue/sum.num);
      dst[RIDX(0, j, dim)] = current_pixel;
 
      (&sum)->red = (&sum)->green = (&sum)->blue = 0;
@@ -408,7 +560,9 @@ static pixel avg(int dim, int i, int j, pixel *src)
 (&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
 (&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
 (&sum)->num++;}}
-     assign_sum_to_pixel(&current_pixel, sum);
+     (&current_pixel)->red = (unsigned short) (sum.red/sum.num);
+(&current_pixel)->green = (unsigned short) (sum.green/sum.num);
+(&current_pixel)->blue = (unsigned short) (sum.blue/sum.num);
      dst[RIDX(dim-1, j, dim)] = current_pixel;
    }
    //for corners
@@ -420,7 +574,9 @@ static pixel avg(int dim, int i, int j, pixel *src)
 (&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
 (&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
 (&sum)->num++;}}
-   assign_sum_to_pixel(&current_pixel, sum);
+   (&current_pixel)->red = (unsigned short) (sum.red/sum.num);
+(&current_pixel)->green = (unsigned short) (sum.green/sum.num);
+(&current_pixel)->blue = (unsigned short) (sum.blue/sum.num);
    dst[RIDX(0, 0, dim)] = current_pixel;
 
    (&sum)->red = (&sum)->green = (&sum)->blue = 0;
@@ -431,7 +587,9 @@ static pixel avg(int dim, int i, int j, pixel *src)
 (&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
 (&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
 (&sum)->num++;}}
-   assign_sum_to_pixel(&current_pixel, sum);
+   (&current_pixel)->red = (unsigned short) (sum.red/sum.num);
+(&current_pixel)->green = (unsigned short) (sum.green/sum.num);
+(&current_pixel)->blue = (unsigned short) (sum.blue/sum.num);
    dst[RIDX(0, dim-1, dim)] = current_pixel;
 
    (&sum)->red = (&sum)->green = (&sum)->blue = 0;
@@ -442,7 +600,9 @@ static pixel avg(int dim, int i, int j, pixel *src)
 (&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
 (&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
 (&sum)->num++;}}
-   assign_sum_to_pixel(&current_pixel, sum);
+   (&current_pixel)->red = (unsigned short) (sum.red/sum.num);
+(&current_pixel)->green = (unsigned short) (sum.green/sum.num);
+(&current_pixel)->blue = (unsigned short) (sum.blue/sum.num);
    dst[RIDX(dim-1, 0, dim)] = current_pixel;
 
    (&sum)->red = (&sum)->green = (&sum)->blue = 0;
@@ -453,7 +613,9 @@ static pixel avg(int dim, int i, int j, pixel *src)
 (&sum)->green += (int) src[RIDX(ii, jj, dim)].green;
 (&sum)->blue += (int) src[RIDX(ii, jj, dim)].blue;
 (&sum)->num++;}}
-   assign_sum_to_pixel(&current_pixel, sum);
+   (&current_pixel)->red = (unsigned short) (sum.red/sum.num);
+(&current_pixel)->green = (unsigned short) (sum.green/sum.num);
+(&current_pixel)->blue = (unsigned short) (sum.blue/sum.num);
    dst[RIDX(dim-1, dim-1, dim)] = current_pixel;
   }
 
