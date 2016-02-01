@@ -110,20 +110,20 @@ void break2_rotate(int dim, pixel *src, pixel *dst)
 }
 char autobreak_rotate_descr[] = "autobreak rotate: breaks the picture into chunks of 32";
 void autobreak_rotate(int dim, pixel *src, pixel *dst)
-{                                   //split the operation into 16
+{
   int i, j, k, l;
-  int s = dim/32;              //how many splits? - experiment with 64 vs 32
-  for (k = 0; k<s; k++)
+  int s = dim/32;              //will split it into 32s
+  for (k = 0; k<s; k++)         //for each fragment
   {
-    int xs = k * 32;      //where to start and end
-    int xe = xs + 32;
+    int xs = k * 32;      //horizontal start
+    int xe = xs + 32;     // horizontal end
     for (l = 0; l<s; l++)
     {
-      int vs = l * 32;
-      int ve = vs + 32;
+      int ys = l * 32;      //vertical start
+      int ye = vs + 32;     //vertical end
 
-      for (i = xs; i < (xe); i++)    //do the swapping
-        for (j = vs; j < ve; j++)
+      for (i = xs; i < (xe); i++)    //do the replacing within the fragment
+        for (j = ys; j < ye; j++)
           dst[((dim-1-i)*(dim)+(j))] = src[((j)*(dim)+(i))];
     }
   }
