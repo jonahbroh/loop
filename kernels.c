@@ -59,7 +59,7 @@ void rotate(int dim, pixel *src, pixel *dst)
       int ye = ys + 32;     //vertical end
 
       for (i = xs; i < (xe); i++)    //do the replacing within the fragment
-        for (j = ys; j < (ys); j++)
+        for (j = ys; j < (ye); j++)
           dst[((dim-1-i)*(dim)+(j))] = src[((j)*(dim)+(i))];
     }
   }
