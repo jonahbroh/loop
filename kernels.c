@@ -250,101 +250,234 @@ static pixel avg(int dim, int i, int j, pixel *src)
 /*
  * naive_smooth - The naive baseline version of smooth
  */
-char naive_smooth_descr[] = "naive_smooth: Naive baseline implementation";
-void naive_smooth(int dim, pixel *src, pixel *dst)
-{
-    int i, j;
+ char naive_smooth_descr[] = "naive_smooth: Naive baseline implementation";
+ void naive_smooth(int dim, pixel *src, pixel *dst)
+ {
+     int i, j;
+
+     for (i = 0; i < dim; i++)
+ 	for (j = 0; j < dim; j++)
+ 	    dst[RIDX(i, j, dim)] = avg(dim, i, j, src);
+ }
+
+ /*
+  * smooth - Your current working version of smooth.
+  * IMPORTANT: This is the version you will be graded on
+  */
+
+  char smooth_descr[] = "smooth: Current working version";
+  void smooth(int dim, pixel *src, pixel *dst)
+  {
+    int i, j, jp;
 
     for (i = 0; i < dim; i++)
-	for (j = 0; j < dim; j++)
-	    dst[RIDX(i, j, dim)] = avg(dim, i, j, src);
-}
+      for (j = 0; j < dim; j+=2)
+      {
+        jp = j+1;
+        dst[RIDX(i, j, dim)] = avg(dim, i, j, src);
+        dst[RIDX(i, jp, dim)] = avg(dim, i, jp, src);
+      }
+  }
+  char inline_smooth_descr[] = "inline smooth: inlines average function, also unrolls loop";
+  void inline_smooth(int dim, pixel *src, pixel *dst)
+  {
+    int i, j, jp;
+    for (i = 0; i < dim; i++)
+      for (j = 0; j < dim; j+=2)
+      {
+        jp = j+1;
 
-/*
- * smooth - Your current working version of smooth.
- * IMPORTANT: This is the version you will be graded on
- */
+        //average funtion
+        int ii, jj;
+        pixel_sum sum;
+        pixel current_pixel;
 
- char smooth_descr[] = "smooth: Current working version";
- void smooth(int dim, pixel *src, pixel *dst)
+        initialize_pixel_sum(&sum);
+        for(ii = max(i-1, 0); ii <= min(i+1, dim-1); ii++)
+       for(jj = max(j-1, 0); jj <= min(j+1, dim-1); jj++)
+         accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+
+        assign_sum_to_pixel(&current_pixel, sum);
+        dst[RIDX(i, j, dim)] = current_pixel;
+
+       //average function 2
+        initialize_pixel_sum(&sum);
+        for(ii = max(i-1, 0); ii <= min(i+1, dim-1); ii++)
+       for(jj = max(jp-1, 0); jj <= min(jp+1, dim-1); jj++)
+         accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+
+        assign_sum_to_pixel(&current_pixel, sum);
+        dst[RIDX(i, jp, dim)] = current_pixel;
+      }
+  }
+
+
+  char middle_smooth_descr[] = "middle smooth: does the middle seperate, also inlines average function, also unrolls loop";
+  void middle_smooth(int dim, pixel *src, pixel *dst)
+  {
+    int i, j, jp, ii, jj;
+    pixel_sum sum;
+    pixel current_pixel;
+    for (i = 1; i < dim-1; i++)
+      for (j = 1; j < dim-1; j+=2)
+      {
+        jp = j+1;
+
+        //average funtion
+
+        initialize_pixel_sum(&sum);
+        for(ii = i-1; ii <= i+1; ii++)
+       for(jj = j-1; jj <= j+1; jj++)
+         accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+
+        assign_sum_to_pixel(&current_pixel, sum);
+        dst[RIDX(i, j, dim)] = current_pixel;
+
+       //average function 2
+        initialize_pixel_sum(&sum);
+        for(ii = i-1; ii <= i+1; ii++)
+       for(jj = jp-1; jj <= jp+1; jj++)
+         accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+
+        assign_sum_to_pixel(&current_pixel, sum);
+        dst[RIDX(i, jp, dim)] = current_pixel;
+      }
+   for (i = 1; i < dim-1; i++)
+   {
+     //average function for top
+     initialize_pixel_sum(&sum);
+     for(ii = i-1; ii <= i+1; ii++)
+    for(jj = 0; jj <= 1; jj++)
+      accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+
+     assign_sum_to_pixel(&current_pixel, sum);
+     dst[RIDX(i, 0, dim)] = current_pixel;
+     // for bottom
+     initialize_pixel_sum(&sum);
+     for(ii = i-1; ii <= i+1; ii++)
+    for(jj = dim-2; jj <= dim-1; jj++)
+      accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+
+     assign_sum_to_pixel(&current_pixel, sum);
+     dst[RIDX(i, dim-1, dim)] = current_pixel;
+
+   }
+   for (j = 1; j < dim-1; j++)
+   {
+     //for sides
+     initialize_pixel_sum(&sum);
+     for(ii = 0; ii <= 1; ii++)
+    for(jj = j-1; jj <= j+1; jj++)
+      accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+     assign_sum_to_pixel(&current_pixel, sum);
+     dst[RIDX(0, j, dim)] = current_pixel;
+
+     initialize_pixel_sum(&sum);
+     for(ii = dim-2; ii <= dim-1; ii++)
+    for(jj = j-1; jj <= j+1; jj++)
+      accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+     assign_sum_to_pixel(&current_pixel, sum);
+     dst[RIDX(dim-1, j, dim)] = current_pixel;
+   }
+   //for corners
+   initialize_pixel_sum(&sum);
+   for(ii = 0; ii <= 1; ii++)
+  for(jj = 0; jj <= 1; jj++)
+    accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+   assign_sum_to_pixel(&current_pixel, sum);
+   dst[RIDX(0, 0, dim)] = current_pixel;
+
+   initialize_pixel_sum(&sum);
+   for(ii = 0; ii <= 1; ii++)
+  for(jj = dim-2; jj <= dim-1; jj++)
+    accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+   assign_sum_to_pixel(&current_pixel, sum);
+   dst[RIDX(0, dim-1, dim)] = current_pixel;
+
+   initialize_pixel_sum(&sum);
+   for(ii = dim-2; ii <= dim-1; ii++)
+  for(jj = 0; jj <= 1; jj++)
+    accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+   assign_sum_to_pixel(&current_pixel, sum);
+   dst[RIDX(dim-1, 0, dim)] = current_pixel;
+
+   initialize_pixel_sum(&sum);
+   for(ii = dim-2; ii <= dim-1; ii++)
+  for(jj = dim-2; jj <= dim-1; jj++)
+    accumulate_sum(&sum, src[RIDX(ii, jj, dim)]);
+   assign_sum_to_pixel(&current_pixel, sum);
+   dst[RIDX(dim-1, dim-1, dim)] = current_pixel;
+  }
+
+
+  char exp_smooth_descr[] = "exp_smooth: does something diferent idk";
+  void exp_smooth(int dim, pixel *src, pixel *dst)
+  {
+      int i, j, ii;
+
+      for (i = 0; i < 2; i++)
+      {
+        for (ii = 0 ; ii < dim; ii++)
+        {
+    	     for (j = 0; j < dim; j++)
+           {
+    	        dst[RIDX(i, j, dim)] = avg(dim, i, j, src);
+           }
+         }
+       }
+  }
+  //one loop for interior of image, no bounds checking
+ char unravel_smooth_descr[] = "smooth unravel: unravels by amount u(2)";
+ void unravel_smooth(int dim, pixel *src, pixel *dst)
  {
-   int i, j, jp;
+   int i, j, k, jp;
+   int u = 2;
 
    for (i = 0; i < dim; i++)
      for (j = 0; j < dim; j+=2)
      {
-       jp = j+1;
-       dst[RIDX(i, j, dim)] = avg(dim, i, j, src);
-       dst[RIDX(i, jp, dim)] = avg(dim, i, jp, src);
+       for (k = 0; k < u; k++)
+       {
+         jp = j+k;
+         dst[RIDX(i, jp, dim)] = avg(dim, i, jp, src);
+       }
      }
  }
 
- char exp_smooth_descr[] = "exp_smooth: does something diferent idk";
- void exp_smooth(int dim, pixel *src, pixel *dst)
+ char unravel2_smooth_descr[] = "smooth unravel2: unravels by amount u(4)";
+ void unravel2_smooth(int dim, pixel *src, pixel *dst)
  {
-     int i, j, ii;
+   int i, j, k, jp;
+   int u = 4;
 
-     for (i = 0; i < 2; i++)
+   for (i = 0; i < dim; i++)
+     for (j = 0; j < dim; j+=2)
      {
-       for (ii = 0 ; ii < dim; ii++)
+       for (k = 0; k < u; k++)
        {
-   	     for (j = 0; j < dim; j++)
-          {
-   	        dst[RIDX(i, j, dim)] = avg(dim, i, j, src);
-          }
-        }
-      }
+         jp = j+k;
+         dst[RIDX(i, jp, dim)] = avg(dim, i, jp, src);
+       }
+     }
  }
- //one loop for interior of image, no bounds checking
-char unravel_smooth_descr[] = "smooth unravel: unravels by amount u(2)";
-void unravel_smooth(int dim, pixel *src, pixel *dst)
-{
-  int i, j, k, jp;
-  int u = 2;
-
-  for (i = 0; i < dim; i++)
-    for (j = 0; j < dim; j+=2)
-    {
-      for (k = 0; k < u; k++)
-      {
-        jp = j+k;
-        dst[RIDX(i, jp, dim)] = avg(dim, i, jp, src);
-      }
-    }
-}
-
-char unravel2_smooth_descr[] = "smooth unravel2: unravels by amount u(4)";
-void unravel2_smooth(int dim, pixel *src, pixel *dst)
-{
-  int i, j, k, jp;
-  int u = 4;
-
-  for (i = 0; i < dim; i++)
-    for (j = 0; j < dim; j+=2)
-    {
-      for (k = 0; k < u; k++)
-      {
-        jp = j+k;
-        dst[RIDX(i, jp, dim)] = avg(dim, i, jp, src);
-      }
-    }
-}
 
 
 
 
-/*********************************************************************
- * register_smooth_functions - Register all of your different versions
- *     of the smooth kernel with the driver by calling the
- *     add_smooth_function() for each test function.  When you run the
- *     driver program, it will test and report the performance of each
- *     registered test function.
- *********************************************************************/
+ /*********************************************************************
+  * register_smooth_functions - Register all of your different versions
+  *     of the smooth kernel with the driver by calling the
+  *     add_smooth_function() for each test function.  When you run the
+  *     driver program, it will test and report the performance of each
+  *     registered test function.
+  *********************************************************************/
 
-void register_smooth_functions() {
-    add_smooth_function(&smooth, smooth_descr);
-    add_smooth_function(&naive_smooth, naive_smooth_descr);
-    /* ... Register additional test functions here */
-    add_smooth_function(&unravel_smooth, unravel_smooth_descr);
-    //add_smooth_function(&unravel2_smooth, unravel2_smooth_descr);
-}
+ void register_smooth_functions() {
+     add_smooth_function(&naive_smooth, naive_smooth_descr);
+     add_smooth_function(&smooth, smooth_descr);
+     /* ... Register additional test functions here */
+     add_smooth_function(&unravel_smooth, unravel_smooth_descr);
+     add_smooth_function(inline_smooth, inline_smooth_descr);
+     add_smooth_function(middle_smooth, middle_smooth_descr);
+     //add_smooth_function(&unravel2_smooth, unravel2_smooth_descr);
+ }
