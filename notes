@@ -1,0 +1,5 @@
+Loop unrolling
+Common subexpression elimination
+Loop interchange
+Loop locking
+Function inlining
